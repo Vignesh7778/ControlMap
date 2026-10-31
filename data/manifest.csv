@@ -1,1 +1,2 @@
 file,source_url,downloaded_on,bytes,sha256
+NIST_SP-800-53_rev5_catalog.json,https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json,2026-10-26T18:24:42.115665,10448237,64ca6b4161de51ab6af098a7d101d326f14c95e1abf721396cd8a049e8115eeb,324
