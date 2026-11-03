@@ -817,12 +817,12 @@
 #     main()
 
 
-import os
 import csv
-import json
-import time
-import re
 import hashlib
+import json
+import os
+import re
+import time
 from datetime import datetime
 from urllib.parse import urljoin
 
@@ -830,7 +830,6 @@ import requests
 from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-
 
 # ============================================================
 # CONFIGURATION

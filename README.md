@@ -136,6 +136,13 @@ Open `http://127.0.0.1:8000/health` in your browser, or run:
 curl http://127.0.0.1:8000/health
 ```
 
+## Run with Docker
+```bash
+cp .env.example .env
+docker compose up --build
+curl localhost:8000/ready
+```
+
 Expected response is a JSON object with `"status": "ok"`. The `requirements-dev.txt` file is used by the current starter instructions; check that it exists in your checkout before installing.
 
 ## Evaluation
