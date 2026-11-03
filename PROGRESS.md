@@ -6,7 +6,7 @@ Commit after every class. Tag every Friday: `git tag week-N && git push origin w
 - [x] Repo created from the Examate template and registered on the form
 - [x] README top section filled from my project card
 - [x] /health runs locally
-- [] docs/QUESTIONS.md: 10 real questions
+- [x] docs/QUESTIONS.md: 10 real questions
 - [x] 50+ pages collected, DATASET.md filled, sample in data/sample/
 - [x] Tag week-1 pushed
 
