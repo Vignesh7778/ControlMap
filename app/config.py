@@ -33,6 +33,15 @@ class Settings(BaseSettings):
     llm_fallback_api_key: str = ""
     llm_timeout_seconds: float = 30.0
     llm_max_retries: int = 3
+    
+    
+    # Cost logging
+    cost_log_path: str = "logs/cost_log.jsonl"
+    
+    # LLM pricing
+    price_input_per_million: float = 0.50
+    price_output_per_million: float = 1.50
+
 
 
 @lru_cache
