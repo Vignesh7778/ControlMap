@@ -3,9 +3,9 @@
 
 ControlMap is a cybersecurity compliance search tool for auditors and security analysts. Search for a control ID such as `AC-2(4)` or `IA-5(1)` and, as the project develops, get the matching NIST control text, enhancements, related controls, and source references in one place.
 
-[![CI](https://github.com/Vignesh7778/sample/actions/workflows/ci.yml/badge.svg)](https://github.com/Vignesh7778/sample/actions/workflows/ci.yml)
+[![CI](https://github.com/Vignesh7778/ControlMap/actions/workflows/ci.yml/badge.svg)](https://github.com/Vignesh7778/ControlMap/actions/workflows/ci.yml)
 
-**Live:** https://controlmap.onrender.com/health · first request after 15 idle minutes takes about a minute (free tier)
+**Live:** [https://controlmap.onrender.com/health](https://controlmap.onrender.com/health) · The first request after 15 minutes of inactivity may take about a minute due to the Render free tier.
 
 > **Project status:** Starter backend created. Exact-control search, document ingestion, hybrid retrieval, and policy gap analysis are planned features—not yet represented as completed functionality in this repository.
 
