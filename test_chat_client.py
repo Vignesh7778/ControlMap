@@ -1,16 +1,10 @@
-
 import requests
 
 URL = "http://127.0.0.1:8000/chat"
 
 request = {
-    "messages": [
-        {
-            "role": "user",
-            "content": "What is NIST SP 800 publications?"
-        }
-    ],
-    "model": "gemini-3.8-flash"
+    "messages": [{"role": "user", "content": "What is NIST SP 800 publications?"}],
+    "model": "gemini-3.8-flash",
 }
 
 print("=================================")
@@ -21,11 +15,7 @@ print("\nSending request...")
 # print(json.dumps(request, indent=2))
 
 try:
-    response = requests.post(
-        URL,
-        json=request,
-        timeout=120
-    )
+    response = requests.post(URL, json=request, timeout=120)
 
     print("\nStatus Code:", response.status_code)
     print("Headers:", dict(response.headers))

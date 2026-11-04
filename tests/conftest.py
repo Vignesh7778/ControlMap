@@ -1,4 +1,3 @@
-
 import pytest
 from fastapi.testclient import TestClient
 
@@ -8,10 +7,7 @@ from app.main import app
 
 @pytest.fixture
 def client():
-    test_settings = Settings(
-        app_name="examate-rag",
-        environment="test"
-    )
+    test_settings = Settings(app_name="examate-rag", environment="test")
 
     app.dependency_overrides[get_settings] = lambda: test_settings
 

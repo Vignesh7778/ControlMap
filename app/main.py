@@ -18,7 +18,6 @@
 #     return {"status": "ok", "app": settings.app_name, "environment": settings.environment}
 
 
-
 import json
 import time
 from collections.abc import AsyncIterator
@@ -58,14 +57,15 @@ def say_hello():
 def say_root():
     return "You are on root page"
 
-#this is for to check for the API is healthy or not.
+
+# this is for to check for the API is healthy or not.
 @app.get("/health")
 def health(settings: SettingsDep) -> dict:
     """Liveness: the process is up. Must be fast and must not call the LLM or the DB."""
     return {"status": "ok", "app": settings.app_name, "environment": settings.environment}
 
 
-#this is for to check for the Database is healthy or not.
+# this is for to check for the Database is healthy or not.
 @app.get("/ready")
 def ready(settings: SettingsDep):
     """Readiness: dependencies are reachable. Load balancers and hosts use this."""

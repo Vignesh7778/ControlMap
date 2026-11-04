@@ -839,32 +839,15 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 DATA_DIR = os.path.join(BASE_DIR, "data")
 
-RAW_DIR = os.path.join(
-    DATA_DIR,
-    "raw",
-    "sp800"
-)
+RAW_DIR = os.path.join(DATA_DIR, "raw", "sp800")
 
-METADATA_DIR = os.path.join(
-    DATA_DIR,
-    "metadata",
-    "sp800"
-)
+METADATA_DIR = os.path.join(DATA_DIR, "metadata", "sp800")
 
-PUBLICATIONS_FILE = os.path.join(
-    DATA_DIR,
-    "sp800_publications.json"
-)
+PUBLICATIONS_FILE = os.path.join(DATA_DIR, "sp800_publications.json")
 
-MANIFEST_FILE = os.path.join(
-    DATA_DIR,
-    "sp800_manifest.csv"
-)
+MANIFEST_FILE = os.path.join(DATA_DIR, "sp800_manifest.csv")
 
-FAILED_FILE = os.path.join(
-    DATA_DIR,
-    "sp800_failed_downloads.json"
-)
+FAILED_FILE = os.path.join(DATA_DIR, "sp800_failed_downloads.json")
 
 LISTING_URL = "https://csrc.nist.gov/publications/sp800"
 
@@ -881,6 +864,7 @@ EXPECTED_PUBLICATIONS = 230
 # DIRECTORY SETUP
 # ============================================================
 
+
 def create_directories():
     os.makedirs(DATA_DIR, exist_ok=True)
     os.makedirs(RAW_DIR, exist_ok=True)
@@ -890,6 +874,7 @@ def create_directories():
 # ============================================================
 # HTTP SESSION
 # ============================================================
+
 
 def create_session():
 
@@ -901,62 +886,33 @@ def create_session():
         read=MAX_RETRIES,
         status=MAX_RETRIES,
         backoff_factor=2,
-
-        status_forcelist=[
-            429,
-            500,
-            502,
-            503,
-            504
-        ],
-
-        allowed_methods=[
-            "GET"
-        ],
-
-        raise_on_status=False
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["GET"],
+        raise_on_status=False,
     )
 
-    adapter = HTTPAdapter(
-        max_retries=retry_strategy
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+
+    session.mount("https://", adapter)
+
+    session.mount("http://", adapter)
+
+    session.headers.update(
+        {
+            "User-Agent": (
+                "Mozilla/5.0 "
+                "(Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 "
+                "(KHTML, like Gecko) "
+                "Chrome/156.0.0.0 "
+                "Safari/537.36"
+            ),
+            "Accept": ("application/pdf,application/octet-stream,text/html,application/xhtml+xml,*/*;q=0.8"),
+            "Accept-Language": "en-US,en;q=0.9",
+            "Accept-Encoding": "gzip, deflate",
+            "Connection": "keep-alive",
+        }
     )
-
-    session.mount(
-        "https://",
-        adapter
-    )
-
-    session.mount(
-        "http://",
-        adapter
-    )
-
-    session.headers.update({
-
-        "User-Agent": (
-            "Mozilla/5.0 "
-            "(Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 "
-            "(KHTML, like Gecko) "
-            "Chrome/156.0.0.0 "
-            "Safari/537.36"
-        ),
-
-        "Accept": (
-            "application/pdf,"
-            "application/octet-stream,"
-            "text/html,"
-            "application/xhtml+xml,"
-            "*/*;q=0.8"
-        ),
-
-        "Accept-Language": "en-US,en;q=0.9",
-
-        "Accept-Encoding": "gzip, deflate",
-
-        "Connection": "keep-alive"
-
-    })
 
     return session
 
@@ -965,26 +921,18 @@ def create_session():
 # FETCH WEB PAGE
 # ============================================================
 
+
 def fetch_page(session, url):
 
     try:
-
-        response = session.get(
-            url,
-            timeout=REQUEST_TIMEOUT
-        )
+        response = session.get(url, timeout=REQUEST_TIMEOUT)
 
         response.raise_for_status()
 
         return response.text
 
     except requests.RequestException as error:
-
-        print(
-            f"[ERROR] Failed to fetch page:\n"
-            f"{url}\n"
-            f"{error}"
-        )
+        print(f"[ERROR] Failed to fetch page:\n{url}\n{error}")
 
         return None
 
@@ -993,16 +941,13 @@ def fetch_page(session, url):
 # TEXT CLEANING
 # ============================================================
 
+
 def clean_text(text):
 
     if not text:
         return ""
 
-    text = re.sub(
-        r"\s+",
-        " ",
-        text
-    )
+    text = re.sub(r"\s+", " ", text)
 
     return text.strip()
 
@@ -1011,33 +956,19 @@ def clean_text(text):
 # EXTRACT SP NUMBER
 # ============================================================
 
+
 def extract_sp_number(text):
 
     if not text:
         return ""
 
-    patterns = [
-
-        r"SP\s*800[-\s]?(\d+[A-Za-z]?)",
-
-        r"Special Publication\s*800[-\s]?(\d+[A-Za-z]?)"
-
-    ]
+    patterns = [r"SP\s*800[-\s]?(\d+[A-Za-z]?)", r"Special Publication\s*800[-\s]?(\d+[A-Za-z]?)"]
 
     for pattern in patterns:
-
-        match = re.search(
-            pattern,
-            text,
-            re.IGNORECASE
-        )
+        match = re.search(pattern, text, re.IGNORECASE)
 
         if match:
-
-            return (
-                "SP 800-"
-                + match.group(1).upper()
-            )
+            return "SP 800-" + match.group(1).upper()
 
     return ""
 
@@ -1046,37 +977,21 @@ def extract_sp_number(text):
 # EXTRACT TITLE
 # ============================================================
 
+
 def extract_title(soup):
 
     title_tag = soup.find("h1")
 
     if title_tag:
-
-        title = clean_text(
-            title_tag.get_text(
-                " ",
-                strip=True
-            )
-        )
+        title = clean_text(title_tag.get_text(" ", strip=True))
 
         if title:
             return title
 
     if soup.title:
+        title = clean_text(soup.title.get_text(" ", strip=True))
 
-        title = clean_text(
-            soup.title.get_text(
-                " ",
-                strip=True
-            )
-        )
-
-        title = re.sub(
-            r"\s*\|\s*NIST.*$",
-            "",
-            title,
-            flags=re.IGNORECASE
-        )
+        title = re.sub(r"\s*\|\s*NIST.*$", "", title, flags=re.IGNORECASE)
 
         return title
 
@@ -1087,10 +1002,8 @@ def extract_title(soup):
 # EXTRACT DOWNLOAD URL
 # ============================================================
 
-def extract_download_url(
-    soup,
-    page_url
-):
+
+def extract_download_url(soup, page_url):
 
     # --------------------------------------------------------
     # Method 1:
@@ -1098,13 +1011,7 @@ def extract_download_url(
     # --------------------------------------------------------
 
     for link in soup.find_all("a"):
-
-        text = clean_text(
-            link.get_text(
-                " ",
-                strip=True
-            )
-        )
+        text = clean_text(link.get_text(" ", strip=True))
 
         href = link.get("href")
 
@@ -1112,11 +1019,7 @@ def extract_download_url(
             continue
 
         if "download" in text.lower():
-
-            return urljoin(
-                page_url,
-                href
-            )
+            return urljoin(page_url, href)
 
     # --------------------------------------------------------
     # Method 2:
@@ -1124,22 +1027,14 @@ def extract_download_url(
     # --------------------------------------------------------
 
     for link in soup.find_all("a"):
-
         href = link.get("href")
 
         if not href:
             continue
 
-        absolute_url = urljoin(
-            page_url,
-            href
-        )
+        absolute_url = urljoin(page_url, href)
 
-        if (
-            "nvlpubs.nist.gov" in absolute_url.lower()
-            and ".pdf" in absolute_url.lower()
-        ):
-
+        if "nvlpubs.nist.gov" in absolute_url.lower() and ".pdf" in absolute_url.lower():
             return absolute_url
 
     # --------------------------------------------------------
@@ -1148,19 +1043,14 @@ def extract_download_url(
     # --------------------------------------------------------
 
     for link in soup.find_all("a"):
-
         href = link.get("href")
 
         if not href:
             continue
 
-        absolute_url = urljoin(
-            page_url,
-            href
-        )
+        absolute_url = urljoin(page_url, href)
 
         if ".pdf" in absolute_url.lower():
-
             return absolute_url
 
     return ""
@@ -1170,23 +1060,15 @@ def extract_download_url(
 # EXTRACT DOI
 # ============================================================
 
+
 def extract_doi(soup):
 
-    page_text = soup.get_text(
-        " ",
-        strip=True
-    )
+    page_text = soup.get_text(" ", strip=True)
 
-    match = re.search(
-        r"10\.\d{4,9}/[-._;()/:A-Za-z0-9]+",
-        page_text
-    )
+    match = re.search(r"10\.\d{4,9}/[-._;()/:A-Za-z0-9]+", page_text)
 
     if match:
-
-        return match.group(0).rstrip(
-            ".,)"
-        )
+        return match.group(0).rstrip(".,)")
 
     return ""
 
@@ -1195,35 +1077,23 @@ def extract_doi(soup):
 # EXTRACT PUBLICATION DATE
 # ============================================================
 
+
 def extract_publication_date(soup):
 
-    text = soup.get_text(
-        " ",
-        strip=True
-    )
+    text = soup.get_text(" ", strip=True)
 
     patterns = [
-
         r"Published\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})",
-
         r"Publication Date\s*:?\s*"
         r"([A-Za-z]+\s+\d{1,2},\s+\d{4})",
-
         r"Date\s*:?\s*"
-        r"([A-Za-z]+\s+\d{1,2},\s+\d{4})"
-
+        r"([A-Za-z]+\s+\d{1,2},\s+\d{4})",
     ]
 
     for pattern in patterns:
-
-        match = re.search(
-            pattern,
-            text,
-            re.IGNORECASE
-        )
+        match = re.search(pattern, text, re.IGNORECASE)
 
         if match:
-
             return match.group(1)
 
     return ""
@@ -1233,55 +1103,31 @@ def extract_publication_date(soup):
 # EXTRACT AUTHORS
 # ============================================================
 
+
 def extract_authors(soup):
 
-    text = soup.get_text(
-        "\n",
-        strip=True
-    )
+    text = soup.get_text("\n", strip=True)
 
-    lines = [
-        clean_text(line)
-        for line in text.splitlines()
-    ]
+    lines = [clean_text(line) for line in text.splitlines()]
 
     for index, line in enumerate(lines):
-
-        if line.lower() in [
-            "author",
-            "authors",
-            "author(s)"
-        ]:
-
+        if line.lower() in ["author", "authors", "author(s)"]:
             authors = []
 
-            for next_line in lines[
-                index + 1:index + 10
-            ]:
-
+            for next_line in lines[index + 1 : index + 10]:
                 if not next_line:
                     continue
 
                 if len(next_line) > 200:
                     break
 
-                if next_line.lower() in [
-                    "abstract",
-                    "keywords",
-                    "publication date",
-                    "status"
-                ]:
+                if next_line.lower() in ["abstract", "keywords", "publication date", "status"]:
                     break
 
-                authors.append(
-                    next_line
-                )
+                authors.append(next_line)
 
             if authors:
-
-                return "; ".join(
-                    authors
-                )
+                return "; ".join(authors)
 
     return ""
 
@@ -1290,37 +1136,15 @@ def extract_authors(soup):
 # EXTRACT STATUS
 # ============================================================
 
+
 def extract_status(soup):
 
-    text = soup.get_text(
-        " ",
-        strip=True
-    )
+    text = soup.get_text(" ", strip=True)
 
-    status_keywords = [
-
-        "Final",
-
-        "Initial Public Draft",
-
-        "Public Draft",
-
-        "Draft",
-
-        "Errata",
-
-        "Update"
-
-    ]
+    status_keywords = ["Final", "Initial Public Draft", "Public Draft", "Draft", "Errata", "Update"]
 
     for keyword in status_keywords:
-
-        if re.search(
-            rf"\b{re.escape(keyword)}\b",
-            text,
-            re.IGNORECASE
-        ):
-
+        if re.search(rf"\b{re.escape(keyword)}\b", text, re.IGNORECASE):
             return keyword
 
     return ""
@@ -1330,94 +1154,47 @@ def extract_status(soup):
 # EXTRACT METADATA
 # ============================================================
 
-def extract_metadata(
-    session,
-    page_url
-):
+
+def extract_metadata(session, page_url):
 
     print()
     print("[PAGE]")
     print(page_url)
 
-    html = fetch_page(
-        session,
-        page_url
-    )
+    html = fetch_page(session, page_url)
 
     if not html:
-
         return None
 
-    soup = BeautifulSoup(
-        html,
-        "html.parser"
-    )
+    soup = BeautifulSoup(html, "html.parser")
 
-    title = extract_title(
-        soup
-    )
+    title = extract_title(soup)
 
-    page_text = soup.get_text(
-        " ",
-        strip=True
-    )
+    page_text = soup.get_text(" ", strip=True)
 
-    sp_number = extract_sp_number(
-        page_text
-    )
+    sp_number = extract_sp_number(page_text)
 
-    download_url = extract_download_url(
-        soup,
-        page_url
-    )
+    download_url = extract_download_url(soup, page_url)
 
-    doi = extract_doi(
-        soup
-    )
+    doi = extract_doi(soup)
 
-    publication_date = extract_publication_date(
-        soup
-    )
+    publication_date = extract_publication_date(soup)
 
-    authors = extract_authors(
-        soup
-    )
+    authors = extract_authors(soup)
 
-    status = extract_status(
-        soup
-    )
+    status = extract_status(soup)
 
     metadata = {
-
         "sp_number": sp_number,
-
         "title": title,
-
-        "publication_date":
-            publication_date,
-
-        "authors":
-            authors,
-
-        "status":
-            status,
-
-        "doi":
-            doi,
-
-        "detail_url":
-            page_url,
-
-        "download_url":
-            download_url,
-
-        "source":
-            "NIST SP 800 Series",
-
-        "retrieved_at":
-            datetime.utcnow().isoformat()
-            + "Z"
-
+        "publication_date": publication_date,
+        "authors": authors,
+        "status": status,
+        "doi": doi,
+        "detail_url": page_url,
+        "download_url": download_url,
+        "source": "NIST SP 800 Series",
+        "retrieved_at": datetime.utcnow().isoformat() + "Z",
     }
 
     return metadata
@@ -1427,9 +1204,8 @@ def extract_metadata(
 # DISCOVER PUBLICATIONS
 # ============================================================
 
-def discover_publications(
-    session
-):
+
+def discover_publications(session):
 
     print()
     print("=" * 70)
@@ -1437,85 +1213,45 @@ def discover_publications(
     print("=" * 70)
 
     print()
-    print(
-        f"[LISTING]\n{LISTING_URL}"
-    )
+    print(f"[LISTING]\n{LISTING_URL}")
 
-    html = fetch_page(
-        session,
-        LISTING_URL
-    )
+    html = fetch_page(session, LISTING_URL)
 
     if not html:
-
         return []
 
-    soup = BeautifulSoup(
-        html,
-        "html.parser"
-    )
+    soup = BeautifulSoup(html, "html.parser")
 
     publication_urls = set()
 
     for link in soup.find_all("a"):
-
         href = link.get("href")
 
         if not href:
             continue
 
-        absolute_url = urljoin(
-            LISTING_URL,
-            href
-        )
+        absolute_url = urljoin(LISTING_URL, href)
 
-        absolute_url = (
-            absolute_url
-            .split("#")[0]
-        )
+        absolute_url = absolute_url.split("#")[0]
 
-        absolute_lower = (
-            absolute_url.lower()
-        )
+        absolute_lower = absolute_url.lower()
 
         # Current NIST publication URL
-        if (
-            "/pubs/sp/800/" in absolute_lower
-        ):
+        if "/pubs/sp/800/" in absolute_lower:
+            publication_urls.add(absolute_url)
 
-            publication_urls.add(
-                absolute_url
-            )
-
-    publication_urls = sorted(
-        publication_urls
-    )
+    publication_urls = sorted(publication_urls)
 
     print()
-    print(
-        f"[FOUND] "
-        f"{len(publication_urls)} "
-        f"publication detail links"
-    )
+    print(f"[FOUND] {len(publication_urls)} publication detail links")
 
     if len(publication_urls) != EXPECTED_PUBLICATIONS:
-
         print()
-        print(
-            "[WARNING] Expected "
-            f"{EXPECTED_PUBLICATIONS} "
-            "publications."
-        )
+        print(f"[WARNING] Expected {EXPECTED_PUBLICATIONS} publications.")
 
-        print(
-            f"[WARNING] Found "
-            f"{len(publication_urls)}."
-        )
+        print(f"[WARNING] Found {len(publication_urls)}.")
 
-        print(
-            "[WARNING] Continuing with "
-            "the discovered links."
-        )
+        print("[WARNING] Continuing with the discovered links.")
 
     return publication_urls
 
@@ -1524,34 +1260,20 @@ def discover_publications(
 # SAFE FILE NAME
 # ============================================================
 
-def safe_filename(
-    sp_number,
-    title
-):
+
+def safe_filename(sp_number, title):
 
     if not sp_number:
-
         sp_number = "unknown"
 
     filename = sp_number
 
     if title:
+        clean_title = re.sub(r"[<>:\"/\\|?*]", "", title)
 
-        clean_title = re.sub(
-            r"[<>:\"/\\|?*]",
-            "",
-            title
-        )
+        clean_title = re.sub(r"\s+", "_", clean_title)
 
-        clean_title = re.sub(
-            r"\s+",
-            "_",
-            clean_title
-        )
-
-        clean_title = clean_title[
-            :100
-        ]
+        clean_title = clean_title[:100]
 
         filename += "_" + clean_title
 
@@ -1562,29 +1284,19 @@ def safe_filename(
 # SHA256
 # ============================================================
 
-def calculate_sha256(
-    filepath
-):
+
+def calculate_sha256(filepath):
 
     sha256 = hashlib.sha256()
 
-    with open(
-        filepath,
-        "rb"
-    ) as file:
-
+    with open(filepath, "rb") as file:
         while True:
-
-            chunk = file.read(
-                1024 * 1024
-            )
+            chunk = file.read(1024 * 1024)
 
             if not chunk:
                 break
 
-            sha256.update(
-                chunk
-            )
+            sha256.update(chunk)
 
     return sha256.hexdigest()
 
@@ -1593,37 +1305,22 @@ def calculate_sha256(
 # CHECK EXISTING FILE
 # ============================================================
 
-def is_valid_pdf(
-    filepath
-):
 
-    if not os.path.exists(
-        filepath
-    ):
+def is_valid_pdf(filepath):
 
+    if not os.path.exists(filepath):
         return False
 
-    if os.path.getsize(
-        filepath
-    ) < 1000:
-
+    if os.path.getsize(filepath) < 1000:
         return False
 
     try:
-
-        with open(
-            filepath,
-            "rb"
-        ) as file:
-
-            header = file.read(
-                5
-            )
+        with open(filepath, "rb") as file:
+            header = file.read(5)
 
         return header == b"%PDF-"
 
     except OSError:
-
         return False
 
 
@@ -1631,83 +1328,42 @@ def is_valid_pdf(
 # DOWNLOAD PDF
 # ============================================================
 
-def download_file(
-    session,
-    metadata,
-    index,
-    total
-):
 
-    download_url = metadata.get(
-        "download_url",
-        ""
-    )
+def download_file(session, metadata, index, total):
+
+    download_url = metadata.get("download_url", "")
 
     if not download_url:
+        print("[SKIP] No PDF download URL")
 
-        print(
-            "[SKIP] No PDF download URL"
-        )
+        return {"success": False, "error": "No download URL"}
 
-        return {
-            "success": False,
-            "error": "No download URL"
-        }
+    sp_number = metadata.get("sp_number", "")
 
-    sp_number = metadata.get(
-        "sp_number",
-        ""
-    )
+    title = metadata.get("title", "")
 
-    title = metadata.get(
-        "title",
-        ""
-    )
-
-    filename = safe_filename(
-        sp_number,
-        title
-    )
+    filename = safe_filename(sp_number, title)
 
     filename += ".pdf"
 
-    output_path = os.path.join(
-        RAW_DIR,
-        filename
-    )
+    output_path = os.path.join(RAW_DIR, filename)
 
     # --------------------------------------------------------
     # Already downloaded?
     # --------------------------------------------------------
 
-    if is_valid_pdf(
-        output_path
-    ):
-
+    if is_valid_pdf(output_path):
         print()
-        print(
-            "[EXISTS] "
-            + output_path
-        )
+        print("[EXISTS] " + output_path)
 
-        sha256 = calculate_sha256(
-            output_path
-        )
+        sha256 = calculate_sha256(output_path)
 
         return {
-
             "success": True,
-
             "status": "already_exists",
-
             "filepath": output_path,
-
             "sha256": sha256,
-
-            "size": os.path.getsize(
-                output_path
-            )
-
+            "size": os.path.getsize(output_path),
         }
 
     print()
@@ -1718,24 +1374,12 @@ def download_file(
     # Use detail page as Referer
     # --------------------------------------------------------
 
-    detail_url = metadata.get(
-        "detail_url",
-        LISTING_URL
-    )
+    detail_url = metadata.get("detail_url", LISTING_URL)
 
     headers = {
-
         "Referer": detail_url,
-
-        "Accept": (
-            "application/pdf,"
-            "application/octet-stream,"
-            "*/*;q=0.8"
-        ),
-
-        "Accept-Language":
-            "en-US,en;q=0.9",
-
+        "Accept": ("application/pdf,application/octet-stream,*/*;q=0.8"),
+        "Accept-Language": "en-US,en;q=0.9",
         "User-Agent": (
             "Mozilla/5.0 "
             "(Windows NT 10.0; Win64; x64) "
@@ -1743,96 +1387,52 @@ def download_file(
             "(KHTML, like Gecko) "
             "Chrome/156.0.0.0 "
             "Safari/537.36"
-        )
-
+        ),
     }
 
-    temporary_path = (
-        output_path
-        + ".part"
-    )
+    temporary_path = output_path + ".part"
 
     try:
-
         response = session.get(
-            download_url,
-            headers=headers,
-            timeout=REQUEST_TIMEOUT,
-            stream=True,
-            allow_redirects=True
+            download_url, headers=headers, timeout=REQUEST_TIMEOUT, stream=True, allow_redirects=True
         )
 
-        status_code = (
-            response.status_code
-        )
+        status_code = response.status_code
 
-        print(
-            f"[HTTP] {status_code}"
-        )
+        print(f"[HTTP] {status_code}")
 
         # ----------------------------------------------------
         # Handle HTTP errors
         # ----------------------------------------------------
 
         if status_code != 200:
-
-            print(
-                "[ERROR] Download failed: "
-                f"HTTP {status_code}"
-            )
+            print(f"[ERROR] Download failed: HTTP {status_code}")
 
             response.close()
 
             return {
-
                 "success": False,
-
-                "error":
-                    f"HTTP {status_code}",
-
-                "status_code":
-                    status_code,
-
-                "url":
-                    download_url
-
+                "error": f"HTTP {status_code}",
+                "status_code": status_code,
+                "url": download_url,
             }
 
         # ----------------------------------------------------
         # Check content type
         # ----------------------------------------------------
 
-        content_type = (
-            response.headers.get(
-                "Content-Type",
-                ""
-            )
-            .lower()
-        )
+        content_type = response.headers.get("Content-Type", "").lower()
 
-        print(
-            f"[CONTENT-TYPE] "
-            f"{content_type}"
-        )
+        print(f"[CONTENT-TYPE] {content_type}")
 
         # ----------------------------------------------------
         # Save response
         # ----------------------------------------------------
 
-        with open(
-            temporary_path,
-            "wb"
-        ) as file:
-
-            for chunk in response.iter_content(
-                chunk_size=1024 * 1024
-            ):
-
+        with open(temporary_path, "wb") as file:
+            for chunk in response.iter_content(chunk_size=1024 * 1024):
                 if chunk:
-
-                    file.write(
-                        chunk
-                    )
+                    file.write(chunk)
 
         response.close()
 
@@ -1840,268 +1440,122 @@ def download_file(
         # Validate PDF
         # ----------------------------------------------------
 
-        if not is_valid_pdf(
-            temporary_path
-        ):
-
-            print(
-                "[ERROR] Response is "
-                "not a valid PDF."
-            )
+        if not is_valid_pdf(temporary_path):
+            print("[ERROR] Response is not a valid PDF.")
 
             try:
-                os.remove(
-                    temporary_path
-                )
+                os.remove(temporary_path)
             except OSError:
                 pass
 
             return {
-
                 "success": False,
-
-                "error":
-                    "Downloaded content is not a valid PDF",
-
-                "content_type":
-                    content_type,
-
-                "url":
-                    download_url
-
+                "error": "Downloaded content is not a valid PDF",
+                "content_type": content_type,
+                "url": download_url,
             }
 
         # ----------------------------------------------------
         # Rename .part -> .pdf
         # ----------------------------------------------------
 
-        os.replace(
-            temporary_path,
-            output_path
-        )
+        os.replace(temporary_path, output_path)
 
         # ----------------------------------------------------
         # Calculate hash
         # ----------------------------------------------------
 
-        sha256 = calculate_sha256(
-            output_path
-        )
+        sha256 = calculate_sha256(output_path)
 
-        file_size = os.path.getsize(
-            output_path
-        )
+        file_size = os.path.getsize(output_path)
 
-        print(
-            f"[SUCCESS] "
-            f"{file_size:,} bytes"
-        )
+        print(f"[SUCCESS] {file_size:,} bytes")
 
-        print(
-            f"[SHA256] "
-            f"{sha256}"
-        )
+        print(f"[SHA256] {sha256}")
 
         return {
-
             "success": True,
-
             "status": "downloaded",
-
             "filepath": output_path,
-
             "sha256": sha256,
-
             "size": file_size,
-
-            "content_type":
-                content_type
-
+            "content_type": content_type,
         }
 
     except requests.RequestException as error:
+        print("[ERROR] Download failed:")
 
-        print(
-            "[ERROR] Download failed:"
-        )
-
-        print(
-            error
-        )
+        print(error)
 
         try:
-
-            if os.path.exists(
-                temporary_path
-            ):
-
-                os.remove(
-                    temporary_path
-                )
+            if os.path.exists(temporary_path):
+                os.remove(temporary_path)
 
         except OSError:
             pass
 
-        return {
-
-            "success": False,
-
-            "error":
-                str(error),
-
-            "url":
-                download_url
-
-        }
+        return {"success": False, "error": str(error), "url": download_url}
 
 
 # ============================================================
 # SAVE JSON
 # ============================================================
 
-def save_json(
-    filepath,
-    data
-):
 
-    with open(
-        filepath,
-        "w",
-        encoding="utf-8"
-    ) as file:
+def save_json(filepath, data):
 
-        json.dump(
-            data,
-            file,
-            indent=2,
-            ensure_ascii=False
-        )
+    with open(filepath, "w", encoding="utf-8") as file:
+        json.dump(data, file, indent=2, ensure_ascii=False)
 
 
 # ============================================================
 # SAVE MANIFEST
 # ============================================================
 
-def save_manifest(
-    records
-):
+
+def save_manifest(records):
 
     fieldnames = [
-
         "sp_number",
-
         "title",
-
         "publication_date",
-
         "status",
-
         "detail_url",
-
         "download_url",
-
         "filepath",
-
         "size",
-
         "sha256",
-
         "download_status",
-
-        "error"
-
+        "error",
     ]
 
-    with open(
-        MANIFEST_FILE,
-        "w",
-        newline="",
-        encoding="utf-8"
-    ) as file:
-
-        writer = csv.DictWriter(
-            file,
-            fieldnames=fieldnames
-        )
+    with open(MANIFEST_FILE, "w", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
 
         writer.writeheader()
 
         for record in records:
-
-            writer.writerow({
-
-                "sp_number":
-                    record.get(
-                        "sp_number",
-                        ""
-                    ),
-
-                "title":
-                    record.get(
-                        "title",
-                        ""
-                    ),
-
-                "publication_date":
-                    record.get(
-                        "publication_date",
-                        ""
-                    ),
-
-                "status":
-                    record.get(
-                        "status",
-                        ""
-                    ),
-
-                "detail_url":
-                    record.get(
-                        "detail_url",
-                        ""
-                    ),
-
-                "download_url":
-                    record.get(
-                        "download_url",
-                        ""
-                    ),
-
-                "filepath":
-                    record.get(
-                        "filepath",
-                        ""
-                    ),
-
-                "size":
-                    record.get(
-                        "size",
-                        ""
-                    ),
-
-                "sha256":
-                    record.get(
-                        "sha256",
-                        ""
-                    ),
-
-                "download_status":
-                    record.get(
-                        "download_status",
-                        ""
-                    ),
-
-                "error":
-                    record.get(
-                        "error",
-                        ""
-                    )
-
-            })
+            writer.writerow(
+                {
+                    "sp_number": record.get("sp_number", ""),
+                    "title": record.get("title", ""),
+                    "publication_date": record.get("publication_date", ""),
+                    "status": record.get("status", ""),
+                    "detail_url": record.get("detail_url", ""),
+                    "download_url": record.get("download_url", ""),
+                    "filepath": record.get("filepath", ""),
+                    "size": record.get("size", ""),
+                    "sha256": record.get("sha256", ""),
+                    "download_status": record.get("download_status", ""),
+                    "error": record.get("error", ""),
+                }
+            )
 
 
 # ============================================================
 # MAIN
 # ============================================================
+
 
 def main():
 
@@ -2114,17 +1568,11 @@ def main():
     # DISCOVER PUBLICATIONS
     # ========================================================
 
-    publication_urls = discover_publications(
-        session
-    )
+    publication_urls = discover_publications(session)
 
     if not publication_urls:
-
         print()
-        print(
-            "[ERROR] "
-            "No publication links found."
-        )
+        print("[ERROR] No publication links found.")
 
         return
 
@@ -2140,62 +1588,33 @@ def main():
 
     publications = []
 
-    total = len(
-        publication_urls
-    )
+    total = len(publication_urls)
 
-    for index, page_url in enumerate(
-        publication_urls,
-        start=1
-    ):
-
+    for index, page_url in enumerate(publication_urls, start=1):
         print()
-        print(
-            f"[{index}/{total}]"
-        )
+        print(f"[{index}/{total}]")
 
-        metadata = extract_metadata(
-            session,
-            page_url
-        )
+        metadata = extract_metadata(session, page_url)
 
         if metadata:
+            publications.append(metadata)
 
-            publications.append(
-                metadata
-            )
-
-        time.sleep(
-            DOWNLOAD_DELAY
-        )
+        time.sleep(DOWNLOAD_DELAY)
 
     # ========================================================
     # SAVE METADATA
     # ========================================================
 
-    save_json(
-        PUBLICATIONS_FILE,
-        publications
-    )
+    save_json(PUBLICATIONS_FILE, publications)
 
     print()
-    print(
-        "=" * 70
-    )
+    print("=" * 70)
 
-    print(
-        f"[SUCCESS] Saved metadata for "
-        f"{len(publications)} publications"
-    )
+    print(f"[SUCCESS] Saved metadata for {len(publications)} publications")
 
-    print(
-        f"[FILE] "
-        f"{PUBLICATIONS_FILE}"
-    )
+    print(f"[FILE] {PUBLICATIONS_FILE}")
 
-    print(
-        "=" * 70
-    )
+    print("=" * 70)
 
     # ========================================================
     # STEP 3
@@ -2203,25 +1622,17 @@ def main():
     # ========================================================
 
     print()
-    print(
-        "=" * 70
-    )
+    print("=" * 70)
 
-    print(
-        "DOWNLOADING PUBLICATIONS"
-    )
+    print("DOWNLOADING PUBLICATIONS")
 
-    print(
-        "=" * 70
-    )
+    print("=" * 70)
 
     manifest_records = []
 
     failed_downloads = []
 
-    total = len(
-        publications
-    )
+    total = len(publications)
 
     successful = 0
 
@@ -2229,140 +1640,66 @@ def main():
 
     skipped = 0
 
-    for index, metadata in enumerate(
-        publications,
-        start=1
-    ):
-
+    for index, metadata in enumerate(publications, start=1):
         print()
-        print(
-            "=" * 70
-        )
+        print("=" * 70)
 
-        print(
-            f"[{index}/{total}]"
-        )
+        print(f"[{index}/{total}]")
 
-        print(
-            metadata.get(
-                "sp_number",
-                "Unknown"
-            )
-        )
+        print(metadata.get("sp_number", "Unknown"))
 
-        print(
-            metadata.get(
-                "title",
-                ""
-            )
-        )
+        print(metadata.get("title", ""))
 
-        print(
-            "=" * 70
-        )
+        print("=" * 70)
 
-        result = download_file(
-            session,
-            metadata,
-            index,
-            total
-        )
+        result = download_file(session, metadata, index, total)
 
         # ----------------------------------------------------
         # Store result
         # ----------------------------------------------------
 
-        metadata["download_status"] = (
-            "success"
-            if result.get("success")
-            else "failed"
-        )
+        metadata["download_status"] = "success" if result.get("success") else "failed"
 
-        if result.get(
-            "success"
-        ):
-
-            if result.get(
-                "status"
-            ) == "already_exists":
-
+        if result.get("success"):
+            if result.get("status") == "already_exists":
                 skipped += 1
 
             else:
-
                 successful += 1
 
-            metadata["filepath"] = (
-                result.get(
-                    "filepath",
-                    ""
-                )
-            )
+            metadata["filepath"] = result.get("filepath", "")
 
-            metadata["sha256"] = (
-                result.get(
-                    "sha256",
-                    ""
-                )
-            )
+            metadata["sha256"] = result.get("sha256", "")
 
-            metadata["size"] = (
-                result.get(
-                    "size",
-                    ""
-                )
-            )
+            metadata["size"] = result.get("size", "")
 
         else:
-
             failed += 1
 
-            metadata["error"] = (
-                result.get(
-                    "error",
-                    "Unknown error"
-                )
-            )
+            metadata["error"] = result.get("error", "Unknown error")
 
-            failed_downloads.append(
-                metadata.copy()
-            )
+            failed_downloads.append(metadata.copy())
 
-        manifest_records.append(
-            metadata
-        )
+        manifest_records.append(metadata)
 
         # ----------------------------------------------------
         # Save progress after every file
         # ----------------------------------------------------
 
-        save_json(
-            PUBLICATIONS_FILE,
-            publications
-        )
+        save_json(PUBLICATIONS_FILE, publications)
 
-        save_manifest(
-            manifest_records
-        )
+        save_manifest(manifest_records)
 
-        if result.get(
-            "success"
-        ):
-
+        if result.get("success"):
             pass
 
-        time.sleep(
-            DOWNLOAD_DELAY
-        )
+        time.sleep(DOWNLOAD_DELAY)
 
     # ========================================================
     # SAVE FAILED DOWNLOADS
     # ========================================================
 
-    save_json(
-        FAILED_FILE,
-        failed_downloads
-    )
+    save_json(FAILED_FILE, failed_downloads)
 
     # ========================================================
     # FINAL SUMMARY
@@ -2370,58 +1707,30 @@ def main():
 
     print()
     print()
-    print(
-        "=" * 70
-    )
+    print("=" * 70)
 
-    print(
-        "DOWNLOAD COMPLETE"
-    )
+    print("DOWNLOAD COMPLETE")
 
-    print(
-        "=" * 70
-    )
+    print("=" * 70)
 
-    print(
-        f"Total publications : {total}"
-    )
+    print(f"Total publications : {total}")
 
-    print(
-        f"Downloaded          : {successful}"
-    )
+    print(f"Downloaded          : {successful}")
 
-    print(
-        f"Already existed     : {skipped}"
-    )
+    print(f"Already existed     : {skipped}")
 
-    print(
-        f"Failed              : {failed}"
-    )
+    print(f"Failed              : {failed}")
 
     print()
-    print(
-        f"Metadata            : "
-        f"{PUBLICATIONS_FILE}"
-    )
+    print(f"Metadata            : {PUBLICATIONS_FILE}")
 
-    print(
-        f"Manifest            : "
-        f"{MANIFEST_FILE}"
-    )
+    print(f"Manifest            : {MANIFEST_FILE}")
 
-    print(
-        f"Failed downloads    : "
-        f"{FAILED_FILE}"
-    )
+    print(f"Failed downloads    : {FAILED_FILE}")
 
-    print(
-        f"PDF directory       : "
-        f"{RAW_DIR}"
-    )
+    print(f"PDF directory       : {RAW_DIR}")
 
-    print(
-        "=" * 70
-    )
+    print("=" * 70)
 
 
 # ============================================================
@@ -2429,5 +1738,4 @@ def main():
 # ============================================================
 
 if __name__ == "__main__":
-
     main()

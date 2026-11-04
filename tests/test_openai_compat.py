@@ -24,11 +24,7 @@ async def test_openai_compatible_provider_reads_sse_and_usage():
             "usage": {"prompt_tokens": 2, "completion_tokens": 1},
             "choices": [],
         }
-        body = (
-            f"data: {json.dumps(payload)}\n\n"
-            f"data: {json.dumps(usage)}\n\n"
-            "data: [DONE]\n\n"
-        )
+        body = f"data: {json.dumps(payload)}\n\ndata: {json.dumps(usage)}\n\ndata: [DONE]\n\n"
         return httpx.Response(200, text=body)
 
     provider = OpenAICompatProvider(
