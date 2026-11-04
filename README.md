@@ -170,4 +170,4 @@ Create 50 labelled questions that include exact control IDs and enhancements. Me
 
 - **Repository:** [Vignesh7778/ControlMap](https://github.com/Vignesh7778/ControlMap)
 - **NIST SP 800 publications:** https://csrc.nist.gov/publications/sp800
-- **Live link:** Not deployed yet; add the URL after Week 2 deployment.
+- **Live link:** https://controlmap.onrender.com
