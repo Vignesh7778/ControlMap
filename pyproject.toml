@@ -10,6 +10,3 @@ testpaths = ["tests"]
 pythonpath = ["."]
 
 #Docker-smoke: - to test the entire dockerfiles is working or not in the github
-
-
-    
